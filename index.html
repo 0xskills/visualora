@@ -1,0 +1,234 @@
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+
+  <!-- Font awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" />
+
+  <!-- Styles -->
+  <link href="styles.css" rel="stylesheet" />
+
+  <!-- Jquery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+  <!-- 3D Animation -->
+  <script src="//unpkg.com/3d-force-graph"></script>
+
+  <!-- AlgoSDK-->
+  <script src="https://unpkg.com/algosdk@v3.2.0/dist/browser/algosdk.min.js"
+    integrity="sha384-P3wogHQ1+Zf+KQbCx+X4AXICZ0I9nV2FkJuL/5QJ7xQYv44ctvHyz026hnxuhLDR"
+    crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <div class="header">
+    &nbsp;Oranges Mining View v0.4
+  </div>
+
+  <div class="loader"></div>
+
+  <div class="tables-container">
+    <div style="width:300px">
+      <div class="row">
+        <div class="col">
+          Play/Pause
+        </div>
+        <div class="col">
+          Tables
+        </div>
+        <div class="col">
+          3D
+        </div>
+
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="toggle toggle-play">
+            <span toggle="#play" class="fa fa-lg fa-pause"></span>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="toggle toggle-tables">
+            <span toggle="#tables" class="fa fa-lg fa-eye"></span>
+          </div>
+        </div>
+        <div class="col">
+          <div class="toggle toggle-chart">
+            <span toggle="#chart" class="fa fa-lg fa-eye"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="txsTableDiv" style="position: absolute; z-index: 5; margin-top: 10px; left:20px; ">
+    <div class="table-wrapper">
+      <table id="tblStats" class="scroll" style="color: orange; text-align: center;">
+        <thead>
+          <tr>
+            <th style="width:200px;">Elapsed</th>
+            <th>Miners</th>
+            <th>Mining TX/s</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="width:200px;" id="elapsed"></td>
+            <td id="miners"></td>
+            <td id="tps"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <br />
+
+    <p style="color: orange;font-weight: bold;">Mining txs</p>
+    <div class="table-wrapper">
+      <table id="tblMining" class="scroll" style="color: orange; text-align: center;">
+        <thead>
+          <tr>
+            <th style="width:200px;">Round</th>
+            <th>Juicer</th>
+            <th>Spent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <br />
+    <p style="color: orange;font-weight: bold;">Payout txs</p>
+    <table id="txsMined" class="scroll" style="color: orange; text-align: center;">
+      <thead>
+        <tr>
+          <th style="width:200px;">Round</th>
+          <th>Juicer</th>
+          <th>$ORA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    <br />
+    <p style="color: orange; font-weight: bold;">Totals</p>
+    <table id="tblMiningTotals" class="scroll" style="color: orange; text-align: center;">
+      <thead>
+        <tr>
+          <th style="width:200px;">Juicer(Beneficiary)</th>
+          <th>$Algo spent</th>
+          <th>$ORA mined</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="width:200px;"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="3d-graph" style="margin-top: -128px;"></div>
+
+  <div class="footer">
+    &nbsp;Another one powered by Nodely.io
+  </div>
+
+  <script>
+
+    let Graph;
+    let initData = {
+      nodes: [],
+      links: []
+    };
+  </script>
+
+  <script type="module">
+    import SpriteText from "https://esm.sh/three-spritetext";
+    import elementResizeDetectorMaker from 'https://esm.sh/element-resize-detector';
+    import { CSS2DRenderer, CSS2DObject } from 'https://esm.sh/three/examples/jsm/renderers/CSS2DRenderer.js';
+
+
+    Graph = new ForceGraph3D(document.getElementById('3d-graph'), {
+      extraRenderers: [new CSS2DRenderer()]
+    })
+      .graphData(initData)
+      .linkDirectionalArrowLength(3.5)
+      .linkDirectionalArrowRelPos(1)
+      .linkCurvature(0.15)
+      .enableNodeDrag(true)
+      .onNodeClick(openUrl)
+      .nodeLabel('id')
+      .nodeThreeObjectExtend(true)
+      .nodeThreeObject(node => {
+        const nodeEl = document.createElement('div');
+        nodeEl.textContent = node.id;
+        nodeEl.textContent = node.text;
+        nodeEl.style.color = 'orange';
+        nodeEl.className = 'node-label';
+        nodeEl.style.marginTop = 50;
+        return new CSS2DObject(nodeEl);
+      })
+      .linkThreeObjectExtend(true)
+      .linkThreeObject(link => {
+        // extend link with text sprite
+        const sprite = new SpriteText(``);
+        sprite.color = 'lightgrey';
+        sprite.textHeight = 1.5;
+        return sprite;
+      })
+      .linkPositionUpdate((sprite, { start, end }) => {
+        const middlePos = Object.assign(...['x', 'y', 'z'].map(c => ({
+          [c]: start[c] + (end[c] - start[c]) / 2 // calc middle point
+        })));
+
+        // Position sprite
+        Object.assign(sprite.position, middlePos);
+      });
+
+
+    // Responsive graph
+    elementResizeDetectorMaker().listenTo(
+      document.getElementById('3d-graph'),
+      el => Graph.width(el.offsetWidth)
+    );
+
+
+    const linkForce = Graph
+      .d3Force('link')
+      .distance(50);
+    Graph.numDimensions(3); // Re-heat simulation
+
+
+    function openUrl(node) {
+      let { nodes, links } = Graph.graphData();
+      window.open('https://allo.info/account/' + node.id, '_blank').focus();
+
+    }
+
+  </script>
+  <script src="scripts.js"></script>
+  
+</body>
