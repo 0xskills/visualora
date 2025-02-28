@@ -15,7 +15,7 @@ Generate self-signed certificate for local server
 ```
 mkdir ssl
 cd ssl
-openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout private.key -out certificate.crt
+openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout private.key -out certificate.crt -config openssl.cnf
 uncomment server at vite.config.js
 ```
 ## Usage
